@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WA Ban — Deshan Dev</title>
+<style>
+:root{
+  --base:#04010a;--surface:#08020f;--red:#ff1744;
+  --red-dim:#3a0010;--text:#d0c0e0;--muted:#3a2a4a;--border:#140828;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--base);color:var(--text);font-family:'Segoe UI',sans-serif;padding:16px}
+h1{font-size:1.1rem;font-weight:800;color:var(--red);letter-spacing:.06em;margin-bottom:2px}
+.sub{font-size:.65rem;color:var(--muted);letter-spacing:.12em;margin-bottom:18px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 16px;margin-bottom:14px}
+.card-title{font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.1em;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+label{display:block;font-size:.68rem;color:#5a4a6a;margin-bottom:5px}
+input{width:100%;background:#050110;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 12px;font-size:.82rem;outline:none;margin-bottom:12px;transition:border-color .15s}
+input:focus{border-color:var(--red)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* THREAT METER */
+.meter-wrap{margin-bottom:16px}
+.meter-label{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:6px}
+.meter-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.meter-fill{height:100%;border-radius:3px;width:0%;transition:width .4s;
+  background:linear-gradient(90deg,#ff6b6b,var(--red))}
+
+/* BAN INDICATOR */
+.ban-ring{
+  width:90px;height:90px;border-radius:50%;
+  border:3px solid var(--red-dim);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;position:relative;
+  background:rgba(255,23,68,.04);
+}
+.ban-ring.active{
+  border-color:var(--red);
+  box-shadow:0 0 30px rgba(255,23,68,.3),inset 0 0 20px rgba(255,23,68,.05);
+  animation:ring-pulse 1.5s infinite;
+}
+.ban-ring-text{font-size:.7rem;font-weight:800;color:var(--red);text-align:center;line-height:1.4}
+
+@keyframes ring-pulse{
+  0%,100%{box-shadow:0 0 20px rgba(255,23,68,.2)}
+  50%{box-shadow:0 0 50px rgba(255,23,68,.5)}
+}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:#050110;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-num{font-size:1.4rem;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums}
+.stat-label{font-size:.6rem;color:var(--muted);margin-top:3px}
+
+.btn-fire{
+  width:100%;background:var(--red);color:#fff;border:none;border-radius:10px;
+  padding:16px;font-size:1rem;font-weight:800;cursor:pointer;
+  letter-spacing:.05em;box-shadow:0 0 30px rgba(255,23,68,.3);
+  margin-bottom:10px;transition:background .15s;
+}
+.btn-fire:hover{background:#d01030}
+.btn-fire:disabled{background:#200510;color:#3a0010;cursor:default;box-shadow:none}
+.btn-stop{
+  width:100%;background:transparent;color:var(--muted);
+  border:1px solid var(--border);border-radius:10px;padding:12px;
+  font-size:.82rem;font-weight:700;cursor:pointer;transition:border-color .15s,color .15s;
+}
+.btn-stop:hover{border-color:var(--red);color:var(--red)}
+.btn-stop:disabled{opacity:.3;cursor:default}
+
+.log{background:#030008;border:1px solid var(--border);border-radius:10px;padding:12px;height:200px;overflow-y:auto;font-size:.68rem;font-family:'Courier New',monospace;color:#4a3a5a}
+.log div{padding:2px 0;border-bottom:1px solid #08020f}
+.ok{color:#39ff85}.err{color:var(--red)}.info{color:#7a5a9a}.warn{color:#ffc107}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--base)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<h1>🔴 WA BAN</h1>
+<div class="sub">DESHAN DEV · MASS REPORT ENGINE</div>
+
+<!-- CONFIG -->
+<div class="card">
+  <div class="card-title">CONFIG</div>
+  <label>API URL</label>
+  <input id="api" value="https://your-api.railway.app"/>
+  <label>Target Number</label>
+  <input id="target" type="tel" placeholder="94771234567"/>
+  <div class="row">
+    <div>
+      <label>Rounds</label>
+      <input id="rounds" type="number" value="3" min="1" max="10"/>
+    </div>
+    <div>
+      <label>Delay (ms)</label>
+      <input id="delay" type="number" value="500" min="300"/>
+    </div>
+  </div>
+</div>
+
+<!-- BAN STATUS -->
+<div class="card" style="text-align:center">
+  <div class="ban-ring" id="banRing">
+    <div class="ban-ring-text" id="banText">READY</div>
+  </div>
+  <div class="meter-wrap">
+    <div class="meter-label">
+      <span>Report pressure</span>
+      <span id="meterPct">0%</span>
+    </div>
+    <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="sSent">0</div><div class="stat-label">REPORTS</div></div>
+    <div class="stat"><div class="stat-num" id="sFail">0</div><div class="stat-label">FAILED</div></div>
+    <div class="stat"><div class="stat-num" id="sSess">0</div><div class="stat-label">SESSIONS</div></div>
+  </div>
+</div>
+
+<button class="btn-fire" id="btnFire" onclick="startBan()">🔴 EXECUTE BAN</button>
+<button class="btn-stop" id="btnStop" onclick="stopBan()" disabled>STOP</button>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-title">REPORT LOG</div>
+  <div class="log" id="log"><div class="info">[ DESHAN DEV ] ready to execute.</div></div>
+</div>
+
+<script>
+let es = null;
+let sent = 0, fail = 0, sessions = 0;
+
+function addLog(msg, cls='info') {
+  const log = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = cls;
+  const t = new Date().toLocaleTimeString('en-GB', {hour12:false});
+  d.textContent = `[${t}] ${msg}`;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setMeter(pct) {
+  document.getElementById('meterFill').style.width = pct + '%';
+  document.getElementById('meterPct').textContent = pct + '%';
+}
+
+function startBan() {
+  const api    = document.getElementById('api').value.trim().replace(/\/$/,'');
+  const target = document.getElementById('target').value.replace(/[^0-9]/g,'');
+  const rounds = document.getElementById('rounds').value;
+  const delay  = document.getElementById('delay').value;
+
+  if (!api || !target) { addLog('API URL and target required', 'err'); return; }
+
+  sent = 0; fail = 0; sessions = 0;
+  document.getElementById('sSent').textContent = '0';
+  document.getElementById('sFail').textContent = '0';
+  document.getElementById('sSess').textContent = '0';
+  setMeter(0);
+
+  document.getElementById('btnFire').disabled = true;
+  document.getElementById('btnStop').disabled = false;
+
+  const ring = document.getElementById('banRing');
+  const txt  = document.getElementById('banText');
+  ring.classList.add('active');
+  txt.textContent = 'FIRING';
+
+  addLog(`Target: +${target} | Rounds: ${rounds} | Delay: ${delay}ms`, 'warn');
+
+  const url = `${api}/report?target=${target}&rounds=${rounds}&delayMs=${delay}`;
+  es = new EventSource(url);
+
+  es.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+
+    if (d.type === 'start') {
+      addLog(`Report engine started → +${d.target}`, 'info');
+    }
+    else if (d.type === 'ok') {
+      sent++;
+      document.getElementById('sSent').textContent = sent;
+      addLog(d.msg, 'ok');
+      const pct = Math.min(100, Math.round((sent / Math.max(sent+fail,1)) * 100));
+      setMeter(pct);
+    }
+    else if (d.type === 'err') {
+      fail++;
+      document.getElementById('sFail').textContent = fail;
+      addLog(d.msg, 'err');
+    }
+    else if (d.type === 'warn') {
+      addLog(d.msg, 'warn');
+    }
+    else if (d.type === 'info') {
+      if (d.msg.includes('sessions:')) {
+        const m = d.msg.match(/(\d+) \//) || d.msg.match(/Found (\d+)/);
+        if (m) { sessions = parseInt(m[1]); document.getElementById('sSess').textContent = sessions; }
+      }
+      addLog(d.msg, 'info');
+    }
+    else if (d.type === 'done') {
+      addLog(`DONE — Reports sent: ${d.success} | Failed: ${d.failed} | Sessions: ${d.total}`, 'ok');
+      setMeter(100);
+      ring.classList.remove('active');
+      txt.textContent = d.success > 0 ? 'FIRED' : 'DONE';
+      document.getElementById('btnFire').disabled = false;
+      document.getElementById('btnStop').disabled = true;
+      es.close(); es = null;
+    }
+  };
+
+  es.onerror = () => {
+    addLog('Stream error — connection lost', 'err');
+    ring.classList.remove('active');
+    txt.textContent = 'ERROR';
+    document.getElementById('btnFire').disabled = false;
+    document.getElementById('btnStop').disabled = true;
+    if (es) { es.close(); es = null; }
+  };
+}
+
+function stopBan() {
+  if (es) { es.close(); es = null; }
+  addLog('Stopped.', 'warn');
+  document.getElementById('banRing').classList.remove('active');
+  document.getElementById('banText').textContent = 'STOPPED';
+  document.getElementById('btnFire').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+}
+</script>
+</body>
+  </html>
